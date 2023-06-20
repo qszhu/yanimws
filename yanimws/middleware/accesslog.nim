@@ -20,8 +20,8 @@ setLogging()
 
 proc Logging*(): YaHandler =
   return proc(c: YaContext) {.async, gcsafe.} =
-    logging.info &"{c.request.remoteAddr} -> {c.request.`method`} {c.request.path}"
+    logging.info &"{c.request.remoteAddr} -> {c.request.httpMethod} {c.request.path}"
     let t = cpuTime()
     waitFor c.next()
     let elapsed = cpuTime() - t
-    logging.info &"{c.request.remoteAddr} <- {c.request.`method`} {c.request.path} {c.response.status.int} ({elapsed * 1000:.3f}ms)"
+    logging.info &"{c.request.remoteAddr} <- {c.request.httpMethod} {c.request.path} {c.response.status.int} ({elapsed * 1000:.3f}ms)"

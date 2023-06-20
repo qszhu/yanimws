@@ -1,18 +1,43 @@
 import std/[
   asyncdispatch,
   asynchttpserver,
+  json,
   sequtils,
   tables,
   uri,
 ]
+
+export json, tables
+
+
+
+type
+  YaRequestKV* = Table[string, string]
+
+proc newYaRequestKV*(): YaRequestKV {.inline.} =
+  initTable[string, string]()
+
+proc newYaRequestKV*(jso: JsonNode): YaRequestKV =
+  result = newYaRequestKV()
+  for k, v in jso.pairs:
+    if v.kind == JObject:
+      result[k] = $v
+    else:
+      result[k] = v.getStr
+
+proc toJson*(self: YaRequestKV): JsonNode =
+  result = %*{}
+  for k, v in self.pairs:
+    result[k] = %v
 
 
 
 type
   YaRequest* = ref object
     rawReq: Request
-    params*: Table[string, string]
-    queries*: Table[string, string]
+    params*: YaRequestKV
+    queries*: YaRequestKV
+    body*: YaRequestKV
 
 proc newYaRequest*(req: Request): YaRequest =
   result.new
@@ -22,7 +47,7 @@ proc newYaRequest*(req: Request): YaRequest =
 proc remoteAddr*(self: YaRequest): string {.inline.} =
   self.rawReq.hostname
 
-proc `method`*(self: YaRequest): HttpMethod {.inline.} =
+proc httpMethod*(self: YaRequest): HttpMethod {.inline.} =
   self.rawReq.reqMethod
 
 proc path*(self: YaRequest): string {.inline.} =
@@ -31,7 +56,7 @@ proc path*(self: YaRequest): string {.inline.} =
 proc headers*(self: YaRequest): HttpHeaders {.inline.} =
   self.rawReq.headers
 
-proc body*(self: YaRequest): string {.inline.} =
+proc rawBody*(self: YaRequest): string {.inline.} =
   self.rawReq.body
 
 proc respond*(self: YaRequest, code: HttpCode, body: string, headers: HttpHeaders): Future[void] {.inline.} =
