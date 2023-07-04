@@ -15,4 +15,5 @@ proc Recovery*(): YaHandler =
       waitFor c.next()
     except:
       logging.error getCurrentException().getStackTrace
+      logging.error getCurrentExceptionMsg()
       c.text(getCurrentExceptionMsg(), Http500)
