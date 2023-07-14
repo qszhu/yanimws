@@ -38,6 +38,7 @@ type
     params*: YaRequestKV
     queries*: YaRequestKV
     body*: YaRequestKV
+    json*: JsonNode
 
 proc newYaRequest*(req: Request): YaRequest =
   result.new

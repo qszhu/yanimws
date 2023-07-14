@@ -38,9 +38,7 @@ proc BodyParser*(): YaHandler =
 
     case contentType.toLowerAscii:
     of CONTENT_TYPE_JSON:
-      let jso = c.request.rawBody.parseJson
-      for k, v in jso.pairs:
-        c.request.body[k] = v.getStr
+      c.request.json = c.request.rawBody.parseJson
     of CONTENT_TYPE_FORMDATA:
       # TODO
       discard
