@@ -3,6 +3,7 @@ import std/[
   asynchttpserver,
   json,
   sequtils,
+  strformat,
   tables,
   uri,
 ]
@@ -17,6 +18,7 @@ type
 proc newYaRequestKV*(): YaRequestKV {.inline.} =
   initTable[string, string]()
 
+discard """
 proc newYaRequestKV*(jso: JsonNode): YaRequestKV =
   result = newYaRequestKV()
   for k, v in jso.pairs:
@@ -29,8 +31,14 @@ proc toJson*(self: YaRequestKV): JsonNode =
   result = %*{}
   for k, v in self.pairs:
     result[k] = %v
+"""
 
+type
+  YaRequestFile* = ref object
+    filename*, content*: string
 
+proc `$`*(self: YaRequestFile): string {.inline.} =
+  &"filename: {self.filename}, size: {self.content.len}"
 
 type
   YaRequest* = ref object
@@ -39,6 +47,7 @@ type
     queries*: YaRequestKV
     body*: YaRequestKV
     json*: JsonNode
+    files*: Table[string, YaRequestFile]
 
 proc newYaRequest*(req: Request): YaRequest =
   result.new
