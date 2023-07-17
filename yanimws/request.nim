@@ -18,7 +18,6 @@ type
 proc newYaRequestKV*(): YaRequestKV {.inline.} =
   initTable[string, string]()
 
-discard """
 proc newYaRequestKV*(jso: JsonNode): YaRequestKV =
   result = newYaRequestKV()
   for k, v in jso.pairs:
@@ -27,6 +26,7 @@ proc newYaRequestKV*(jso: JsonNode): YaRequestKV =
     else:
       result[k] = v.getStr
 
+discard """
 proc toJson*(self: YaRequestKV): JsonNode =
   result = %*{}
   for k, v in self.pairs:
