@@ -26,12 +26,10 @@ proc newYaRequestKV*(jso: JsonNode): YaRequestKV =
     else:
       result[k] = v.getStr
 
-discard """
 proc toJson*(self: YaRequestKV): JsonNode =
   result = %*{}
   for k, v in self.pairs:
     result[k] = %v
-"""
 
 type
   YaRequestFile* = ref object
