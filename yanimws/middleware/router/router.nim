@@ -1,9 +1,3 @@
-import std/[
-  asyncdispatch,
-  asynchttpserver,
-  tables,
-]
-
 import trie
 import ../../server
 

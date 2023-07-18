@@ -1,7 +1,6 @@
 import std/[
   strutils,
   sequtils,
-  tables,
 ]
 
 import ../../server

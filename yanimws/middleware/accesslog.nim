@@ -1,6 +1,4 @@
 import std/[
-  asyncdispatch,
-  logging,
   strformat,
   times,
 ]

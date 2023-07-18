@@ -1,5 +1,4 @@
 import std/[
-  asyncdispatch,
   net,
   strformat,
 ]
