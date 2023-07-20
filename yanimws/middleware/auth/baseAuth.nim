@@ -1,4 +1,4 @@
-import ./server
+import ../../server
 
 
 
@@ -7,7 +7,5 @@ type
     key*, secret*: string
 
 method genSign*(self: BaseAuth, c: YaContext): string {.base.} = discard
-
 method checkSign*(self: BaseAuth, c: YaContext): bool {.base.} = discard
-
-method signParams*(self: BaseAuth, params: YaRequestKV): YaRequestKV {.base.} = discard
+method signParams*(self: BaseAuth, params: JsonNode): JsonNode {.base.} = discard

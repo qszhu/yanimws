@@ -21,7 +21,7 @@ proc newYaRequestKV*(): YaRequestKV {.inline.} =
 proc newYaRequestKV*(jso: JsonNode): YaRequestKV =
   result = newYaRequestKV()
   for k, v in jso.pairs:
-    if v.kind == JObject:
+    if v.kind != JString:
       result[k] = $v
     else:
       result[k] = v.getStr
