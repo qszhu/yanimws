@@ -33,10 +33,10 @@ proc toJson*(self: YaRequestKV): JsonNode =
 
 type
   YaRequestFile* = ref object
-    filename*, content*: string
+    filename*, path*: string
 
 proc `$`*(self: YaRequestFile): string {.inline.} =
-  &"filename: {self.filename}, size: {self.content.len}"
+  &"filename: {self.filename}, path: {self.path}"
 
 type
   YaRequest* = ref object

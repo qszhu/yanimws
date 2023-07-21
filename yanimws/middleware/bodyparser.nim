@@ -5,6 +5,7 @@ import std/[
 ]
 
 import ../server
+import ../utils
 
 export uri
 
@@ -55,16 +56,22 @@ proc parseMultiPart(r: YaRequest, boundary: string) =
         sofar = newSeq[string]()
 
         if "filename" in keys:
-          r.files[keys["name"]] = YaRequestFile(filename: keys["filename"], content: content)
+          let filename = keys["filename"]
+          let path = getTempFn(filename)
+          writeFile(path, content)
+          r.files[keys["name"]] = YaRequestFile(filename: filename, path: path)
         else:
           r.body[keys["name"]] = content
 
         keys = initTable[string, string]()
 
       if line != endBoundary:
+        # TODO: parse multipart headers
         readLine()
         keys = parseKeys()
         readLine()
+        while line.len != 0:
+          readLine()
     else:
       sofar.add line
 
