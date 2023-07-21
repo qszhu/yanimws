@@ -9,4 +9,4 @@ proc Recovery*(): YaHandler =
     except:
       logging.error getCurrentException().getStackTrace
       logging.error getCurrentExceptionMsg()
-      c.text(getCurrentExceptionMsg(), Http500)
+      c.json %*{ "error": getCurrentExceptionMsg() }
