@@ -79,8 +79,9 @@ proc getParams(self: Auth, c: YaContext): JsonNode =
 
 proc genSign(self: Auth, params: JsonNode): string =
   let
-    keys = params.keys.toSeq.sorted
-    paramStr = keys.mapIt(&"{it}={params[it]}").join("&")
+    kvs = newYaRequestKV(params)
+    keys = kvs.keys.toSeq.sorted
+    paramStr = keys.mapIt(&"{it}={kvs[it]}").join("&")
     signStr = paramStr & self.secret
   result = ($sha256.digest(signStr)).toLowerAscii
 
