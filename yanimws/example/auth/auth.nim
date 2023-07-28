@@ -36,6 +36,7 @@ method genSign*(self: Auth, c: YaContext): string =
 
 method checkSign*(self: Auth, c: YaContext): bool =
   var params = self.getParams(c)
+  logging.debug params
 
   for k in [KEY_KEY, KEY_TS, KEY_SIG]:
     if k notin params:
@@ -67,6 +68,8 @@ method signParams*(self: Auth, params: JsonNode): JsonNode =
   result[KEY_SIG] = %self.genSign(result)
 
 proc getParams(self: Auth, c: YaContext): JsonNode =
+  logging.debug c.request.queries
+  logging.debug c.request.rawBody
   if c.request.rawBody.len == 0:
     c.request.queries.toJson
   elif c.request.json != nil:
