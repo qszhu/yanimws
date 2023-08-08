@@ -48,6 +48,7 @@ method request*(self: AuthClient, path: string,
     headers = headers
   )
   body = await res.body
+  client.close
   return body.parseJson
 
 
