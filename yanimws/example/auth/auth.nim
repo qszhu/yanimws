@@ -63,9 +63,9 @@ method checkSign*(self: Auth, c: YaContext): bool =
 
 method signParams*(self: Auth, params: JsonNode): JsonNode =
   result = params
-  result[KEY_KEY] = %self.key
-  result[KEY_TS] = %($currentTimestamp())
-  result[KEY_SIG] = %self.genSign(result)
+  result[KEY_KEY] = %*(self.key)
+  result[KEY_TS] = %*($currentTimestamp())
+  result[KEY_SIG] = %*(self.genSign(result))
 
 proc getParams(self: Auth, c: YaContext): JsonNode =
   logging.debug c.request.queries
@@ -83,6 +83,7 @@ proc genSign(self: Auth, params: JsonNode): string =
     keys = kvs.keys.toSeq.sorted
     paramStr = keys.mapIt(&"{it}={kvs[it]}").join("&")
     signStr = paramStr & self.secret
+  logging.debug signStr
   result = ($sha256.digest(signStr)).toLowerAscii
 
 
