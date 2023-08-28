@@ -41,15 +41,17 @@ method request*(self: AuthClient, path: string,
   else:
     raise newException(ValueError, "unsupported http method " & $httpMethod)
 
-  let res = await client.request(
-    url = url,
-    httpMethod = httpMethod,
-    body = body,
-    headers = headers
-  )
-  body = await res.body
-  client.close
-  return body.parseJson
+  try:
+    let res = await client.request(
+      url = url,
+      httpMethod = httpMethod,
+      body = body,
+      headers = headers
+    )
+    body = await res.body
+    return body.parseJson
+  finally:
+    client.close
 
 
 
