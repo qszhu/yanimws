@@ -44,8 +44,8 @@ proc use*(self: YaContext, handlers: varargs[YaHandler]) =
   for h in handlers:
     self.handlers.add h
 
-proc text*(self: YaContext, text: string, code = Http200) =
-  self.response.headers["Content-Type"] = "text/plain"
+proc text*(self: YaContext, text: string, code = Http200, contentType = "text/plain") =
+  self.response.headers["Content-Type"] = contentType
   self.response.status = code
   self.response.body = text
 
