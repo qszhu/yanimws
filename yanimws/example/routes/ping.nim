@@ -32,10 +32,3 @@ proc addRoutes*(r: Router, auth: YaHandler) =
   r.add(HttpDelete, "/ping/auth", auth, pingAuthQuery)
   r.add(HttpPost, "/ping/auth", bodyParser, auth, pingAuthBody)
   r.add(HttpPut, "/ping/auth", bodyParser, auth, pingAuthBody)
-
-  let corsHandler = cast[YaHandler](proc (c: YaContext) {.async, closure.} =
-    c.response.headers["Access-Control-Allow-Origin"] = "*"
-    c.response.headers["Access-Control-Allow-Headers"] = "*"
-    c.text ""
-  )
-  r.add(HttpOptions, "ping", corsHandler)
