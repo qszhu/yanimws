@@ -27,14 +27,24 @@ proc parseFormUrlEncoded*(body: string): YaRequestKV =
     consumed += 1
     result[decodeUrl(key)] = decodeUrl(val)
 
+proc tail(s: var string, n: int): string {.inline.} =
+  s[max(0, s.len - n) ..< s.len]
+
 proc parseMultiPart(r: YaRequest, boundary: string) =
-  let endBoundary = "--" & boundary & "--"
-  let boundary = "--" & boundary
+  let endBoundary = ("--" & boundary & "--").toLowerAscii
+  let boundary = ("--" & boundary).toLowerAscii
+
+  proc isBoundary(line: var string): bool =
+    line.tail(boundary.len).toLowerAscii.endsWith(boundary)
+
+  proc isEndBoundary(line: var string): bool =
+    line.tail(endBoundary.len).toLowerAscii.endsWith(endBoundary)
 
   var line = ""
   var consumed = 0
+  const LINESEP = "\r\n"
   proc readLine() =
-    consumed += r.rawBody.parseUntil(line, "\r\n", consumed)
+    consumed += r.rawBody.parseUntil(line, LINESEP, consumed)
     consumed += 2
 
   proc parseKeys(): Table[string, string] =
@@ -50,9 +60,9 @@ proc parseMultiPart(r: YaRequest, boundary: string) =
   var sofar = newSeq[string]()
   while consumed < r.rawBody.len:
     readLine()
-    if line.startsWith(boundary):
+    if line.isBoundary:
       if sofar.len > 0:
-        let content = sofar.join("\n")
+        let content = sofar.join(LINESEP)
         sofar = newSeq[string]()
 
         if "filename" in keys:
@@ -65,7 +75,7 @@ proc parseMultiPart(r: YaRequest, boundary: string) =
 
         keys = initTable[string, string]()
 
-      if line != endBoundary:
+      if not line.isEndBoundary:
         # TODO: parse multipart headers
         readLine()
         keys = parseKeys()
