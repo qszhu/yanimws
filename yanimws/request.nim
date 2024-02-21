@@ -51,6 +51,7 @@ proc newYaRequest*(req: Request): YaRequest =
   result.new
   result.rawReq = req
   result.queries = decodeQuery(req.url.query).toSeq.toTable
+  result.json = %*{}
 
 proc remoteAddr*(self: YaRequest): string {.inline.} =
   self.rawReq.hostname
