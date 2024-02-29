@@ -17,14 +17,19 @@ proc getTargetFileParts(root, path: string): seq[string] =
       discard result.pop
     else:
       result.add p
+  # expects a file with extension
   if "." notin result[^1]:
     result.add "index.html"
 
-proc Static*(root: string): YaHandler =
+proc Static*(root: string, prefix = ""): YaHandler =
   let m = newMimetypes()
   return proc(c: YaContext) {.async, gcsafe.} =
-    let parts = getTargetFileParts(root, c.request.path)
-    let mime = m.getMimetype(parts[^1].split(".")[^1])
+    var path = c.request.path
+    if prefix.len > 0 and path.startsWith(prefix):
+      path = path[prefix.len ..< path.len]
+    let parts = getTargetFileParts(root, path)
+    let ext = parts[^1].split(".")[^1]
+    let mime = m.getMimetype(ext)
     let target = parts.join("/")
     logging.debug "serving ", target
     if fileExists(target):
