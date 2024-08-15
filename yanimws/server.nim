@@ -26,6 +26,7 @@ type
   YaServer* = ref object
     middlewares: seq[YaHandler]
     config: Table[string, string]
+    maxBody: int
 
 proc newYaContext*(req: Request, server: YaServer): YaContext =
   result.new
@@ -59,8 +60,9 @@ proc send*(self: YaContext) {.async, inline.} =
 
 
 
-proc newYaServer*(): YaServer =
+proc newYaServer*(maxBody = 0): YaServer =
   result.new
+  result.maxBody = maxBody
 
 proc set*(self: YaServer, key, value: string) {.inline.} =
   self.config[key] = value
@@ -79,7 +81,9 @@ proc run*(self: YaServer, port: Port, address = "") {.async.} =
     await ctx.next()
     await ctx.send()
 
-  let server = newAsyncHttpServer()
+  let server =
+    if self.maxBody > 0: newAsyncHttpServer(maxBody = self.maxBody)
+    else: newAsyncHttpServer()
   for sig in [SIGINT, SIGTERM]:
     addSignal(sig, proc (fd: AsyncFD): bool =
       logging.notice "Server shutting down..."

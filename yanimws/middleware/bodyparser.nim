@@ -1,4 +1,5 @@
 import std/[
+  htmlparser,
   parseutils,
   strutils,
   uri,
@@ -15,6 +16,25 @@ const CONTENT_TYPE = "content-type"
 const CONTENT_TYPE_JSON = "application/json"
 const CONTENT_TYPE_FORM = "application/x-www-form-urlencoded"
 const CONTENT_TYPE_MULTIPART = "multipart/form-data"
+
+proc decodeEntity(s: string): string =
+  let N = s.len
+  var i = 0
+  while i < N:
+    if s[i] == '&':
+      i += 1
+      var e = ""
+      while i < N and s[i] != ';':
+        e &= s[i]
+        i += 1
+      let d = e.entityToUtf8
+      if d.len > 0:
+        result &= d
+      else:
+        result &= e
+    else:
+      result &= s[i]
+    i += 1
 
 proc parseFormUrlEncoded*(body: string): YaRequestKV =
   result = newYaRequestKV()
@@ -49,11 +69,11 @@ proc parseMultiPart(rawBody: string, boundary: string, body: var YaRequestKV, fi
 
   proc parseKeys(): Table[string, string] =
     result = initTable[string, string]()
-    for part in line.strip.split(";"):
+    for part in line.strip.split("; "):
       let parts = part.strip.split("=")
       if parts.len != 2: continue
       let k = parts[0]
-      let v = parts[1][1 ..< ^1]
+      let v = parts[1][1 ..< ^1].decodeEntity
       result[k] = v
 
   var keys = initTable[string, string]()
@@ -162,3 +182,19 @@ abc
     doAssert "foo" in body and body["foo"] == "bar"
     doAssert files.len == 1
     doAssert "fn" in files and files["fn"].filename == ".env"
+
+  block:
+    let rawBody = """
+------WebKitFormBoundarypLop4GeYsrasJB7r
+Content-Disposition: form-data; name="fn"; filename="&#27979;&#35797;.md"
+Content-Type: text/markdown
+
+
+------WebKitFormBoundarypLop4GeYsrasJB7r--
+""".replace("\n", "\r\n")
+    var body = newYaRequestKV()
+    var files = initTable[string, YaRequestFile]()
+    parseMultiPart(rawBody, "----WebKitFormBoundarypLop4GeYsrasJB7r", body, files)
+    doAssert body.len == 0
+    doAssert files.len == 1
+    doAssert "fn" in files and files["fn"].filename == "测试.md"
