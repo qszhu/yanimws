@@ -30,7 +30,7 @@ proc parseFormUrlEncoded*(body: string): YaRequestKV =
 proc tail(s: var string, n: int): string {.inline.} =
   s[max(0, s.len - n) ..< s.len]
 
-proc parseMultiPart(r: YaRequest, boundary: string) =
+proc parseMultiPart(rawBody: string, boundary: string, body: var YaRequestKV, files: var Table[string, YaRequestFile]) =
   let endBoundary = ("--" & boundary & "--").toLowerAscii
   let boundary = ("--" & boundary).toLowerAscii
 
@@ -44,7 +44,7 @@ proc parseMultiPart(r: YaRequest, boundary: string) =
   var consumed = 0
   const LINESEP = "\r\n"
   proc readLine() =
-    consumed += r.rawBody.parseUntil(line, LINESEP, consumed)
+    consumed += rawBody.parseUntil(line, LINESEP, consumed)
     consumed += 2
 
   proc parseKeys(): Table[string, string] =
@@ -58,9 +58,9 @@ proc parseMultiPart(r: YaRequest, boundary: string) =
 
   var keys = initTable[string, string]()
   var sofar = newSeq[string]()
-  while consumed < r.rawBody.len:
+  while consumed < rawBody.len:
     readLine()
-    if line.isBoundary:
+    if line.isBoundary or line.isEndBoundary:
       if sofar.len > 0:
         let content = sofar.join(LINESEP)
         sofar = newSeq[string]()
@@ -69,9 +69,9 @@ proc parseMultiPart(r: YaRequest, boundary: string) =
           let filename = keys["filename"]
           let path = getTempFn(filename)
           writeFile(path, content)
-          r.files[keys["name"]] = YaRequestFile(filename: filename, path: path)
+          files[keys["name"]] = YaRequestFile(filename: filename, path: path)
         else:
-          r.body[keys["name"]] = content
+          body[keys["name"]] = content
 
         keys = initTable[string, string]()
 
@@ -100,6 +100,65 @@ proc BodyParser*(): YaHandler =
       c.request.body = parseFormUrlEncoded(c.request.rawBody)
     elif contentType.startsWith(CONTENT_TYPE_MULTIPART):
       let boundary = contentType.split("boundary=")[1]
-      parseMultiPart(c.request, boundary)
+      parseMultiPart(c.request.rawBody, boundary, c.request.body, c.request.files)
 
     waitFor c.next()
+
+
+
+when isMainModule:
+  block:
+    let rawBody = """
+--e1d2bd7dae64431686a9b20739de762a
+Content-Disposition: form-data; name="fn"; filename="TODO.md"
+
+
+--e1d2bd7dae64431686a9b20739de762a--
+
+""".replace("\n", "\r\n")
+    var body = newYaRequestKV()
+    var files = initTable[string, YaRequestFile]()
+    parseMultiPart(rawBody, "e1d2bd7dae64431686a9b20739de762a", body, files)
+    doAssert body.len == 0
+    doAssert files.len == 1
+    doAssert "fn" in files and files["fn"].filename == "TODO.md"
+
+  block:
+    let rawBody = """
+--ef635ed81574415d91c737d05d3a7f65
+Content-Disposition: form-data; name="fn"; filename=".env"
+
+abc
+--ef635ed81574415d91c737d05d3a7f65
+Content-Disposition: form-data; name="foo"
+
+bar
+--ef635ed81574415d91c737d05d3a7f65--
+""".replace("\n", "\r\n")
+    var body = newYaRequestKV()
+    var files = initTable[string, YaRequestFile]()
+    parseMultiPart(rawBody, "ef635ed81574415d91c737d05d3a7f65", body, files)
+    doAssert body.len == 1
+    doAssert "foo" in body and body["foo"] == "bar"
+    doAssert files.len == 1
+    doAssert "fn" in files and files["fn"].filename == ".env"
+
+  block:
+    let rawBody = """
+--847e58f8524147778f59b97c874af158
+Content-Disposition: form-data; name="foo"
+
+bar
+--847e58f8524147778f59b97c874af158
+Content-Disposition: form-data; name="fn"; filename=".env"
+
+abc
+--847e58f8524147778f59b97c874af158--
+""".replace("\n", "\r\n")
+    var body = newYaRequestKV()
+    var files = initTable[string, YaRequestFile]()
+    parseMultiPart(rawBody, "847e58f8524147778f59b97c874af158", body, files)
+    doAssert body.len == 1
+    doAssert "foo" in body and body["foo"] == "bar"
+    doAssert files.len == 1
+    doAssert "fn" in files and files["fn"].filename == ".env"
