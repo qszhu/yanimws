@@ -115,7 +115,7 @@ proc BodyParser*(): YaHandler =
     contentType = contentType.toLowerAscii
 
     if contentType.startsWith(CONTENT_TYPE_JSON):
-      c.request.json = c.request.rawBody.parseJson
+      c.request.json = if c.request.rawBody.len > 0: c.request.rawBody.parseJson else: %*{}
     elif contentType.startsWith(CONTENT_TYPE_FORM):
       c.request.body = parseFormUrlEncoded(c.request.rawBody)
     elif contentType.startsWith(CONTENT_TYPE_MULTIPART):
