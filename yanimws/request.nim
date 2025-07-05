@@ -70,3 +70,6 @@ proc rawBody*(self: YaRequest): string {.inline.} =
 
 proc respond*(self: YaRequest, code: HttpCode, body: string, headers: HttpHeaders): Future[void] {.inline.} =
   self.rawReq.respond(code, body, headers)
+
+proc raw*(self: YaRequest): Request {.inline.} =
+  self.rawReq
